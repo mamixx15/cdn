@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDN Backend Manager - Vercel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .upload-section, .files-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background: #e3f2fd;
+            border-color: #764ba2;
+        }
+
+        .upload-area i {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-info h4 {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .file-info p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .url-box {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.9em;
+            border: 1px solid #b3d9ff;
+        }
+
+        .preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .server-info {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 CDN Backend Manager</h1>
+            <p>Deployed on Vercel - Support semua jenis MIME Type</p>
+        </div>
+
+        <div class="server-info">
+            <p><strong>⚠️ PERHATIAN:</strong> File disimpan di memory dan akan hilang saat server restart. Untuk production, gunakan cloud storage.</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <h2>📤 Upload File</h2>
+                <div class="upload-area" id="uploadArea">
+                    <i>📁</i>
+                    <h3>Klik atau drop file di sini</h3>
+                    <p>Support semua jenis file (gambar, video, PDF, dll.)</p>
+                    <p>Max size: 25MB</p>
+                    <input type="file" class="file-input" id="fileInput" multiple>
+                </div>
+                <button class="btn" id="uploadBtn" onclick="uploadFiles()">Upload Files</button>
+                
+                <div id="uploadStatus" class="status"></div>
+                
+                <div id="uploadResult" style="display: none;">
+                    <h4>Upload Berhasil!</h4>
+                    <div class="url-box" id="fileUrl"></div>
+                    <button class="btn" onclick="copyUrl()">Salin URL</button>
+                    <button class="btn" onclick="testFile()">Test URL</button>
+                </div>
+            </div>
+
+            <div class="files-section">
+                <h2>📂 File Terupload</h2>
+                <div class="file-actions">
+                    <button class="btn" onclick="loadFiles()">Refresh List</button>
+                    <button class="btn" onclick="clearFiles()">Clear All</button>
+                </div>
+                <div class="file-list" id="fileList">
+                    <p>Memuat daftar file...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-detect API base URL
+        const API_BASE = window.location.origin + '/api';
+        let currentFiles = [];
+
+        // Event listeners untuk drag & drop
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '#e3f2fd';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.background = '';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.background = '';
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            currentFiles = Array.from(files);
+            if (currentFiles.length > 0) {
+                uploadArea.innerHTML = `
+                    <i>📁</i>
+                    <h3>${currentFiles.length} file dipilih</h3>
+                    <p>${currentFiles.map(f => f.name).join(', ')}</p>
+                `;
+            }
+        }
+
+        async function uploadFiles() {
+            if (currentFiles.length === 0) {
+                showStatus('Pilih file terlebih dahulu!', 'error');
+                return;
+            }
+
+            const status = document.getElementById('uploadStatus');
+            status.style.display = 'none';
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+
+            for (const file of currentFiles) {
+                if (file.size > 25 * 1024 * 1024) {
+                    showStatus(`File ${file.name} terlalu besar (max 25MB)`, 'error');
+                    continue;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch(`${API_BASE}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showUploadResult(result.data);
+                        await loadFiles(); // Refresh file list
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    showStatus(`Gagal upload ${file.name}: ${error.message}`, 'error');
+                }
+            }
+
+            // Reset
+            currentFiles = [];
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload Files';
+            uploadArea.innerHTML = `
+                <i>📁</i>
+                <h3>Klik atau drop file di sini</h3>
+                <p>Support semua jenis file (gambar, video, PDF, dll.)</p>
+                <p>Max size: 25MB</p>
+            `;
+        }
+
+        function showUploadResult(fileInfo) {
+            const resultDiv = document.getElementById('uploadResult');
+            const fileUrl = document.getElementById('fileUrl');
+            
+            fileUrl.textContent = fileInfo.url;
+            
+            resultDiv.style.display = 'block';
+            showStatus(`File "${fileInfo.originalName}" berhasil diupload!`, 'success');
+        }
+
+        async function loadFiles() {
+            try {
+                const response = await fetch(`${API_BASE}/files`);
+                const result = await response.json();
+
+                if (result.success) {
+                    displayFiles(result.data);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                document.getElementById('fileList').innerHTML = 
+                    `<p style="color: red;">Error loading files: ${error.message}</p>`;
+            }
+        }
+
+        function displayFiles(files) {
+            const fileList = document.getElementById('fileList');
+            
+            if (files.length === 0) {
+                fileList.innerHTML = '<p>Belum ada file yang diupload</p>';
+                return;
+            }
+
+            fileList.innerHTML = files.map(file => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <h4>${file.originalName}</h4>
+                        <p>Type: ${file.mimetype} | Size: ${formatFileSize(file.size)}</p>
+                        <div class="url-box">${file.url}</div>
+                        ${isPreviewable(file.mimetype) ? 
+                          `<img src="${file.url}" class="preview" alt="Preview" loading="lazy">` : ''}
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn" onclick="copyUrl('${file.url}')">Salin URL</button>
+                        <button class="btn" onclick="viewFile('${file.url}')">Buka</button>
+                        <button class="btn" onclick="testFile('${file.url}')">Test</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function isPreviewable(mimetype) {
+            return mimetype.startsWith('image/');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function copyUrl(url = null) {
+            const textToCopy = url || document.getElementById('fileUrl').textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showStatus('URL berhasil disalin!', 'success');
+            });
+        }
+
+        function viewFile(url) {
+            window.open(url, '_blank');
+        }
+
+        async function testFile(url) {
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    showStatus('URL berhasil diakses!', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                showStatus(`Gagal mengakses URL: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearFiles() {
+            if (confirm('Apakah Anda yakin ingin menghapus semua file? (Server akan reset saat restart)')) {
+                showStatus('File akan hilang saat server restart. Tidak ada action diperlukan.', 'warning');
+            }
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('uploadStatus');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load files on page load
+        document.addEventListener('DOMContentLoaded', loadFiles);
+
+        // Test API connection on load
+        fetch(`${API_BASE}/health`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('API Health:', data);
+            })
+            .catch(error => {
+                console.error('API Connection failed:', error);
+                showStatus('Koneksi ke server gagal', 'error');
+            });
+    </script>
+</body>
+</html>
