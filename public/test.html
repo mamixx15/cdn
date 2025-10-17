@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test CDN API</title>
+</head>
+<body>
+    <h1>Test CDN Backend API</h1>
+    <button onclick="testHealth()">Test Health</button>
+    <button onclick="testUpload()">Test Upload</button>
+    
+    <script>
+        async function testHealth() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                console.log('Health:', data);
+                alert('API Health: ' + data.status);
+            } catch (error) {
+                console.error('Health test failed:', error);
+                alert('Health test failed: ' + error.message);
+            }
+        }
+
+        async function testUpload() {
+            const formData = new FormData();
+            const blob = new Blob(['Test file content'], { type: 'text/plain' });
+            formData.append('file', blob, 'test.txt');
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                console.log('Upload:', data);
+                alert('Upload: ' + data.message);
+            } catch (error) {
+                console.error('Upload test failed:', error);
+                alert('Upload test failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
